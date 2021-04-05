@@ -13,6 +13,13 @@ struct bucket {
 typedef struct bucket Bucket;
 Bucket dictionary[HASH_SIZE];
 
+void toLowerCase(char* word){
+    int i;
+    for(i = 0; i <= strlen(word); i++){
+        if(word[i] >= 65 && word[i] <= 90)
+            word[i] = word[i] + 32;
+    }
+}
 unsigned hash(char* key) {
     unsigned val = 0;
     while (*key)    //as long as key is not pointing to the \0 at the end of the string
@@ -40,6 +47,7 @@ void printDictionary() {
     printf("\n%d words in bucket\n",word_count);
 }
 int dictionaryInsert(char* word) {
+    toLowerCase(word);
     unsigned index = hash(word);
     if (dictionary[index].string == NULL) { //empty bucket
         dictionary[index].string = (char*)malloc(strlen(word) + 1);
@@ -57,23 +65,18 @@ int dictionaryInsert(char* word) {
 int dictionarySearch(char* word) {
     int i = hash(word);
     Bucket* iterator;
+    toLowerCase(word);
     if (dictionary[i].string) {//not an empty bucket
         iterator = &dictionary[i];//head of linked list
         while(iterator) {
-            if (!strcmp(iterator->string, word))//matched
+            if (!strcmpi(iterator->string, word))//matched
                 return 1;
             iterator = iterator->next;
         }
     }
     return 0;//unsuccessful search
 }
-void toLowerCase(char* word){
-//    while(*word){
-//        if(*word >= 'A' && *word <= 'Z')
-//            *word += CASE_OFFSET;
-//        word++;
-//    }
-}
+
 char getCommandWord(char command[], int maxLength) {
     char lastCharacter;//either space or new line
     int i;
@@ -90,6 +93,7 @@ char getCommandWord(char command[], int maxLength) {
 }
 
 int main(int argc, char** argv) {
+    char cleanInput[HASH_SIZE];
     char dictFile[MAX_TOKEN];
     char txtFile[MAX_TOKEN];
     char lastCharacter1;
@@ -181,11 +185,16 @@ int main(int argc, char** argv) {
                                 int i = 0;
                                 for (; fscanf(fileInput, "%s", line) != EOF; i++) {
                                     strtok(line, " ");
-                                    printf("%d: %s \n", i, line);
-                                }
-                                printf("%d words found on %s\n", i, argv[2]);
-                                fclose(fileInput);
+                                    cleanInput[i] = line;
+                                    if(dictionarySearch(line) == 0){ //if word not in bucket
+                                        printf("%d: %s might be misspelled\n", i, line);
+                                    }
 
+                                }
+                                fclose(fileInput);
+//                                for(i = 0; i < strlen(cleanInput); i++){
+//                                    printf("%d: %c \n", i, cleanInput[i]);
+//                                }
 
 
 
