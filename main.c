@@ -32,12 +32,12 @@ void printDictionary() {
         if (dictionary[i].string) {//not an empty bucket
             iterator = &dictionary[i];//head of linked list
             while (iterator) {
-                printf("%s\n", iterator->string);
+                printf("%s, ", iterator->string);
                 iterator = iterator->next;
                 word_count++;
             }
         }
-    printf("%d words in bucket\n",word_count);
+    printf("\n%d words in bucket\n",word_count);
 }
 int dictionaryInsert(char* word) {
     unsigned index = hash(word);
@@ -107,6 +107,7 @@ int main(int argc, char** argv) {
     char tTemp[MAX_TOKEN];
 
     FILE * fileDictionary;
+    FILE * fileInput;
 
     printf("Welcome to my spell checker program, any words spelled incorrectly from the input file will be printed on console \n");
 
@@ -142,6 +143,7 @@ int main(int argc, char** argv) {
                     if (argc == 1) { //redundant check but oh well
                         init();
                         //your code comes here!
+
 //                      start of ../ modification
                         strcpy(dTemp, dictFile);
                         strcpy(tTemp, txtFile);
@@ -166,12 +168,31 @@ int main(int argc, char** argv) {
 //                                printf("line: %s \n", line);
                                 dictionaryInsert(line);
                             }
-                            printf("Printing all words just added to bucket\n");
-                            printDictionary();
+//                            printf("Printing all words just added to bucket\n");
+//                            printDictionary();
                             fclose(fileDictionary);
 
+//                          tokenize the content of “input.txt” file (assume that any character except alphabetical characters,
+//                          dash and the apostrophe character is considered to be a delimiter that separates words).
+//                          not delimiters -> letters  -   '
+                            fileInput = fopen(argv[2],"r");
+                            if(fileInput != NULL) {
+                                printf("Tokenizing all words from input.txt\n");
+                                int i = 0;
+                                for (; fscanf(fileInput, "%s", line) != EOF; i++) {
+                                    strtok(line, " ");
+                                    printf("%d: %s \n", i, line);
+                                }
+                                printf("%d words found on %s\n", i, argv[2]);
+                                fclose(fileInput);
 
-                        } else { printf("File can not be read\n"); }
+
+
+
+
+                            }else { printf("File %s can not be read\n",argv[2] ); }
+
+                        } else { printf("File %s can not be read\n",argv[1] ); }
 
                         printf("\n\n~~~~~~~~~~FINISHED SUCCESSFULLY~~~~~~~~~~\n\n");
                         break;
