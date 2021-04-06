@@ -13,11 +13,11 @@ struct bucket {
 typedef struct bucket Bucket;
 Bucket dictionary[HASH_SIZE];
 
-void toLowerCase(char* word){
+void toLowerCase(char* d){
     int i;
-    for(i = 0; i <= strlen(word); i++){
-        if(word[i] >= 65 && word[i] <= 90)
-            word[i] = word[i] + 32;
+    for(i = 0; i <= strlen(d); i++){
+        if(d[i] >= 65 && d[i] <= 90)
+            d[i] = d[i] + 32;
     }
 }
 unsigned hash(char* key) {
@@ -93,7 +93,6 @@ char getCommandWord(char command[], int maxLength) {
 }
 
 int main(int argc, char** argv) {
-    char cleanInput[HASH_SIZE];
     char dictFile[MAX_TOKEN];
     char txtFile[MAX_TOKEN];
     char lastCharacter1;
@@ -102,119 +101,61 @@ int main(int argc, char** argv) {
     char txtTemp[MAX_TOKEN];
     char *dictFileType;
     char *txtFileType;
+    char *string[HASH_SIZE];
     char line[100];
 
-    //need files to have this in front so program can find them
     char d1[MAX_TOKEN] = "../";
     char t1[MAX_TOKEN] = "../";
     char dTemp[MAX_TOKEN]; //to keep original string unchanged
     char tTemp[MAX_TOKEN];
-
-    FILE * fileDictionary;
-    FILE * fileInput;
+    char delimit[] = "  ( ) \" ,'*&^%$#@!?/.~`1234567890:)(][}{|+=;><\"\t\r\n\v\f";
+    FILE *fileDictionary;
+    FILE *fileInput;
 
     printf("Welcome to my spell checker program, any words spelled incorrectly from the input file will be printed on console \n");
 
-    while (1){ //infinite while loop...
-        printf("Please enter dictionary file name and text file name, ex: dictionary.txt input.txt \n");
-        lastCharacter1 = getCommandWord(dictFile, MAX_TOKEN); //read first input word
-        printf("first argument -> %s \n", dictFile);
+    if (argc != 3) {
+        printf("The program needs two command line arguments: dictionary.txt input.txt");
+        return 1;
+    }
+    printf("The dictionary is stored in file %s\n", argv[1]);
+    printf("The raw textual data for spell checking is stored in file %s\n", argv[2]);
+    init();
 
-        if (strcmp(dictFile, "quit") == 0){ //if command === "quit"
-            printf("Good bye...");
-            break;
-        }else if(lastCharacter1 == '\n'){ //user only entered one argument
-            printf("Too few arguments, must input dictionary file name and text file name, ex: dictionary.txt input.txt \n");
-        }else{
-            lastCharacter2 = getCommandWord(txtFile, MAX_TOKEN); //read second input word
-            if(lastCharacter2 != '\n'){ //user wrote more than two arguments
-                printf("Too many arguments, must only input dictionary file name and text file name, ex: dictionary.txt input.txt \n");
-            }else{ //user wrote exactly two arguments
-                //extract the file type from the input and use temp variables to keep dictFile and txtFile from changing
-                printf("second argument -> %s \n", txtFile);
-                strcpy(dictTemp, dictFile);
-                strcpy(txtTemp, txtFile);
-
-                // get the input/output file type
-                strtok(dictTemp, ".");
-                dictFileType = strtok(NULL, ".");
-
-                strtok(txtTemp, ".");
-                txtFileType = strtok(NULL, ".");
-
-                if((!strcmp(dictFileType, "txt")) &&  (!strcmp(txtFileType, "txt"))) { //check file types are both .txt
-                    printf("\n **** file types accepted, processing request ****\n\n");
-                    if (argc == 1) { //redundant check but oh well
-                        init();
-                        //your code comes here!
-
-//                      start of ../ modification
-                        strcpy(dTemp, dictFile);
-                        strcpy(tTemp, txtFile);
-
-                        strcat(d1, dTemp); //need to add "../" at beginning of file path to avoid a pop up error
-                        strcat(t1, tTemp);
-//                      end of ../ modification
-
-                        argv[1] = d1; // ../dictionary.txt
-                        argv[2] = t1; // ../input.txt
-
-                        printf("The dictionary is stored in file: %s\n", argv[1]);
-                        printf("The raw textual data for spell checking is stored in file: %s\n", argv[2]);
-
-                        fileDictionary = fopen(argv[1],"r");
-
-                        if(fileDictionary != NULL){
-                            printf("Hashing all words from dictionary.txt\n");
-                            int i = 0;
-                            for (; fscanf(fileDictionary, "%[^\n]\n", line) != EOF; i++) {
-                                strtok(line,"\n");
-//                                printf("line: %s \n", line);
-                                dictionaryInsert(line);
-                            }
-//                            printf("Printing all words just added to bucket\n");
-//                            printDictionary();
-                            fclose(fileDictionary);
-
-//                          tokenize the content of “input.txt” file (assume that any character except alphabetical characters,
-//                          dash and the apostrophe character is considered to be a delimiter that separates words).
-//                          not delimiters -> letters  -   '
-                            fileInput = fopen(argv[2],"r");
-                            if(fileInput != NULL) {
-                                printf("Tokenizing all words from input.txt\n");
-                                int i = 0;
-                                for (; fscanf(fileInput, "%s", line) != EOF; i++) {
-                                    strtok(line, " ");
-                                    cleanInput[i] = line;
-                                    if(dictionarySearch(line) == 0){ //if word not in bucket
-                                        printf("%d: %s might be misspelled\n", i, line);
-                                    }
-
-                                }
-                                fclose(fileInput);
-//                                for(i = 0; i < strlen(cleanInput); i++){
-//                                    printf("%d: %c \n", i, cleanInput[i]);
-//                                }
-
-
-
-
-                            }else { printf("File %s can not be read\n",argv[2] ); }
-
-                        } else { printf("File %s can not be read\n",argv[1] ); }
-
-                        printf("\n\n~~~~~~~~~~FINISHED SUCCESSFULLY~~~~~~~~~~\n\n");
-                        break;
-
-                    }else{
-                        printf("The program needs two command line arguments: dictionary.txt input.txt\n");
-                    }
-                }else{ //unaccepted file types entered
-                    printf("\nINVALID FILE TYPE! only .txt files supported\n");
-                }
-            }
+    fileDictionary = fopen(argv[1],"r");
+    if (fileDictionary != NULL) {
+        printf("Hashing all words from dictionary.txt\n");
+        int i = 0;
+        for (; fscanf(fileDictionary, "%[^\n]\n", line) != EOF; i++) {
+            strtok(line, "\n");
+//          printf("line: %s \n", line);
+            dictionaryInsert(line);
         }
     }
+//          printf("Printing all words just added to bucket\n");
+//          printDictionary();
+
+        fclose(fileDictionary);
+
+//  tokenize the content of “input.txt” file (assume that any character except alphabetical characters,
+//  dash and the apostrophe character is considered to be a delimiter that separates words).
+//  not delimiters -> letters  -   '
+    fileInput = fopen(argv[2], "r");
+    if (fileInput != NULL) {
+        int i = 0;
+        for (; fscanf(fileInput, "%s", line) != EOF; i++) {
+            string[i] = strtok(line, delimit);
+            toLowerCase(string[i]);
+            if (dictionarySearch(string[i]) == 0) { //if word not in bucket
+                printf("%d: %s -> not in dict\n", i, string[i]);
+            }
+
+        }
+        printf("\n%d\n", i);
+    }
+
+        fclose(fileInput);
+
     printf("\nend of program.\n");
 
 }
