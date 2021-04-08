@@ -4,7 +4,6 @@
 #include <string.h>
 
 #define HASH_SIZE 10000
-#define MAX_TOKEN 100
 
 struct bucket {
     char* string;
@@ -77,38 +76,11 @@ int dictionarySearch(char* word) {
     return 0;//unsuccessful search
 }
 
-char getCommandWord(char command[], int maxLength) {
-    char lastCharacter;//either space or new line
-    int i;
-    for (i = 0; (lastCharacter = getchar()) == ' '; i++);//skip leading white spaces
-    if (lastCharacter == '\n') {
-        command[0] = '\0';
-        return lastCharacter;
-    }
-    command[0] = lastCharacter;
-    for (i = 1; i < maxLength - 1 && (command[i] = getchar()) != ' ' && command[i] != '\n'; i++);
-    lastCharacter = command[i];
-    command[i] = '\0';
-    return lastCharacter;
-}
-
 int main(int argc, char** argv) {
-    char dictFile[MAX_TOKEN];
-    char txtFile[MAX_TOKEN];
-    char lastCharacter1;
-    char lastCharacter2;
-    char dictTemp[MAX_TOKEN];
-    char txtTemp[MAX_TOKEN];
-    char *dictFileType;
-    char *txtFileType;
     char *string[HASH_SIZE];
     char line[100];
 
-    char d1[MAX_TOKEN] = "../";
-    char t1[MAX_TOKEN] = "../";
-    char dTemp[MAX_TOKEN]; //to keep original string unchanged
-    char tTemp[MAX_TOKEN];
-    char delimit[] = "  ( ) \" ,'*&^%$#@!?/.~`1234567890:)(][}{|+=;><\"\t\r\n\v\f";
+    char* delimit = "0123456789~`@#$%^&*()_+=[]{}\\|:;<,>.?!\t\r\n\v\f\r\"";
     FILE *fileDictionary;
     FILE *fileInput;
 
@@ -128,34 +100,20 @@ int main(int argc, char** argv) {
         int i = 0;
         for (; fscanf(fileDictionary, "%[^\n]\n", line) != EOF; i++) {
             strtok(line, "\n");
-//          printf("line: %s \n", line);
             dictionaryInsert(line);
         }
     }
-//          printf("Printing all words just added to bucket\n");
-//          printDictionary();
+    fclose(fileDictionary);
 
-        fclose(fileDictionary);
-
-//  tokenize the content of “input.txt” file (assume that any character except alphabetical characters,
-//  dash and the apostrophe character is considered to be a delimiter that separates words).
-//  not delimiters -> letters  -   '
     fileInput = fopen(argv[2], "r");
     if (fileInput != NULL) {
         int i = 0;
         for (; fscanf(fileInput, "%s", line) != EOF; i++) {
             string[i] = strtok(line, delimit);
             toLowerCase(string[i]);
-            if (dictionarySearch(string[i]) == 0) { //if word not in bucket
+            if (dictionarySearch(string[i]) == 0)  //if word not in bucket
                 printf("%d: %s -> not in dict\n", i, string[i]);
-            }
-
         }
-        printf("\n%d\n", i);
     }
-
-        fclose(fileInput);
-
-    printf("\nend of program.\n");
-
+    fclose(fileInput);
 }
